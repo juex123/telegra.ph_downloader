@@ -4,7 +4,6 @@ import my.file.springbootmangadownloader.serivice.MangaDownLoaderService;
 import my.file.springbootmangadownloader.serivice.impl.MangaDownLoaderServiceImpl;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * ClassName: UrlProcesser
