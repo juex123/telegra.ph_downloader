@@ -1,22 +1,19 @@
 package my.file.springbootmangadownloader.serivice.impl;
 
-import constant.Constant;
+import my.file.springbootmangadownloader.constant.Constant;
 import my.file.springbootmangadownloader.serivice.MangaDownLoaderService;
+import my.file.springbootmangadownloader.util.FileUtils;
+import my.file.springbootmangadownloader.util.FilenameUtils;
+import my.file.springbootmangadownloader.util.ProxyUtil;
+import my.file.springbootmangadownloader.util.TimeUtil;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
-import utils.FileUtils;
-import utils.KafkaUtil;
-import utils.ProxyUtil;
-import utils.TimeUtil;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -77,9 +74,11 @@ public class MangaDownLoaderServiceImpl implements MangaDownLoaderService {
                         // 查找并处理每个漫画文章的标题
                         Element h1 = article.select("h1").first();
                         String mangaPath = "";
+                        String mangaTitle;
                         if (h1 != null) {
-                            System.out.println("开始下载: " + h1.text());
-                            mangaPath = Paths.get(mainDirPath, h1.text()).toString();
+                            mangaTitle = FilenameUtils.sanitizeFileName(h1.text());
+                            System.out.println("开始下载: " + mangaTitle);
+                            mangaPath = Paths.get(mainDirPath, mangaTitle).toString();
                             FileUtils.createDirectory(mangaPath);
                         } else {
                             System.out.println("没有找到 <h1> tag");
@@ -111,7 +110,7 @@ public class MangaDownLoaderServiceImpl implements MangaDownLoaderService {
                         try {
                             // 等待所有任务完成
                             latch.await();
-                            System.out.println(h1.text() + " 下载完成");
+                            System.out.println(mangaTitle + " 下载完成");
                             FileUtils.zip(mangaPath);
                             FileUtils.deleteFolder(mangaPath);
                         } catch (InterruptedException e) {

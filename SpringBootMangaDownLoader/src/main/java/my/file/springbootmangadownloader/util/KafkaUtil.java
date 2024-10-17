@@ -1,6 +1,6 @@
 package my.file.springbootmangadownloader.util;
 
-import constant.Constant;
+import my.file.springbootmangadownloader.constant.Constant;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
 import java.util.Collections;
