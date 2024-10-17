@@ -190,7 +190,7 @@ public class MangaDownLoaderServiceImpl implements MangaDownLoaderService {
                     }
                 }
                 // 打印下载进度和保存路径
-                System.out.println("正在下载第" + currentIndex + "张，共" + size + "张，图片已保存到：" + savePath);
+                System.out.println("正在下载第" + currentIndex + "页，共" + size + "页，图片已保存为：" + savePath);
             }
         } catch (IOException e) {
             // 打印异常信息
