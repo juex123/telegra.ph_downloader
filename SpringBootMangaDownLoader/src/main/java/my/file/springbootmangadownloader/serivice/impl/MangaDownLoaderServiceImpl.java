@@ -84,12 +84,10 @@ public class MangaDownLoaderServiceImpl implements MangaDownLoaderService {
                             System.out.println("没有找到 <h1> tag");
                             continue;
                         }
-
                         // 查找并处理每个漫画文章的图片
                         Elements images = article.select("img");
                         int size = images.size();
                         CountDownLatch latch = new CountDownLatch(size);
-
                         for (Element img : images) {
                             String imageUrl = img.absUrl("src");
                             if (imageUrl != null && !imageUrl.isEmpty()) {
@@ -106,7 +104,6 @@ public class MangaDownLoaderServiceImpl implements MangaDownLoaderService {
                                 latch.countDown(); // 如果图片URL为空，也需要计数减一
                             }
                         }
-
                         try {
                             // 等待所有任务完成
                             latch.await();
@@ -118,7 +115,6 @@ public class MangaDownLoaderServiceImpl implements MangaDownLoaderService {
                             System.err.println("下载过程中被中断");
                         }
                     }
-
                 } else {
                     System.out.println("Request failed: " + response.code());
                 }
