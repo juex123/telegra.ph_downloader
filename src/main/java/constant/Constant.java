@@ -5,7 +5,7 @@ package constant;
  * Package: constant
  * Description:
  *
- * @Author 庄鹏
+ * @Author JueX
  * @Create 2024/10/15 23:41
  * @Version 1.0
  */

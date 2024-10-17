@@ -10,7 +10,7 @@ import java.net.Proxy;
  * Package: utils
  * Description:
  *
- * @Author 庄鹏
+ * @Author JueX
  * @Create 2024/10/16 1:07
  * @Version 1.0
  */
