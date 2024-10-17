@@ -13,7 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  * @Author JueX
  * @Create 2024/10/17 13:04
- * @Version 1.0.0
+ * @Version 1.0
  */
 public class UrlProcesser implements Runnable{
 
