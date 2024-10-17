@@ -33,7 +33,7 @@ public class UrlProcesser implements Runnable{
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            System.out.println("开始消费 :" + take);
+            System.out.println("正在连接 :" + take);
             mangaDownLoaderService.download(take);
         }
     }

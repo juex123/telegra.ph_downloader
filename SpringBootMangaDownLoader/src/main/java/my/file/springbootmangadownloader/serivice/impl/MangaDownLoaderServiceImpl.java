@@ -23,10 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * ClassName: MangaDownLoaderServiceImpl
@@ -88,25 +85,41 @@ public class MangaDownLoaderServiceImpl implements MangaDownLoaderService {
                             System.out.println("没有找到 <h1> tag");
                             continue;
                         }
+
                         // 查找并处理每个漫画文章的图片
                         Elements images = article.select("img");
-                        int currentIndex = 0;
                         int size = images.size();
+                        CountDownLatch latch = new CountDownLatch(size);
+
                         for (Element img : images) {
-                            currentIndex++;
                             String imageUrl = img.absUrl("src");
                             if (imageUrl != null && !imageUrl.isEmpty()) {
-                                final int index = currentIndex;
+                                final int index = images.indexOf(img) + 1;
                                 String finalMangaPath = mangaPath;
                                 executor.submit(new Runnable() {
                                     @Override
                                     public void run() {
                                         downloadImage(imageUrl, finalMangaPath, index, size);
+                                        latch.countDown(); // 每个任务完成后计数减一
                                     }
                                 });
+                            } else {
+                                latch.countDown(); // 如果图片URL为空，也需要计数减一
                             }
                         }
+
+                        try {
+                            // 等待所有任务完成
+                            latch.await();
+                            System.out.println(h1.text() + " 下载完成");
+                            FileUtils.zip(mangaPath);
+                            FileUtils.deleteFolder(mangaPath);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            System.err.println("下载过程中被中断");
+                        }
                     }
+
                 } else {
                     System.out.println("Request failed: " + response.code());
                 }
@@ -116,17 +129,29 @@ public class MangaDownLoaderServiceImpl implements MangaDownLoaderService {
         }
     }
 
+    /**
+     * 关闭线程池执行器
+     * 本方法确保在优雅关闭线程池时，所有任务有足够的时间完成，
+     * 如果任务在指定的时间内未完成，则会强制关闭线程池
+     */
     private static void shutdownExecutor() {
+        // 关闭线程池，不再接受新任务，但会继续执行已提交的任务
         executor.shutdown();
         try {
+            // 等待线程池在60秒内终止
             if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                // 如果线程池未能在60秒内终止，则强制关闭所有线程
                 executor.shutdownNow();
+                // 再次尝试终止线程池
                 if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                    // 如果线程池仍然未能终止，输出错误信息
                     System.err.println("Executor did not terminate");
                 }
             }
         } catch (InterruptedException e) {
+            // 如果线程在等待终止时被中断，则强制关闭所有线程
             executor.shutdownNow();
+            // 重新设置当前线程的中断状态，以便外部知道该线程被中断过
             Thread.currentThread().interrupt();
         }
     }
