@@ -177,7 +177,7 @@ public class MangaDownLoaderServiceImpl implements MangaDownLoaderService {
                 }
                 // 获取响应体的字节流
                 InputStream inputStream = response.body().byteStream();
-                // 从URL中提取图片文件名
+                // 将文件重命名为4位数的数字，不足前面补零
                 String fileName = String.format("%04d.jpg", currentIndex);
                 // 构建图片保存的完整路径
                 String savePath = Paths.get(saveDirectory, fileName).toString();
