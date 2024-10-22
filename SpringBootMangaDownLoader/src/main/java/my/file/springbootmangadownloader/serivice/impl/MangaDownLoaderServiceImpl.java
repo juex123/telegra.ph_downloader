@@ -63,66 +63,69 @@ public class MangaDownLoaderServiceImpl implements MangaDownLoaderService {
             Request request = new Request.Builder()
                     .url(url)
                     .build();
+
             // 发送请求并处理响应
             try (Response response = client.newCall(request).execute()) {
                 if (response.isSuccessful()) {
                     // 解析响应内容
                     String content = response.body().string();
                     Document doc = Jsoup.parse(content);
-                    Elements articles = doc.select("article");
-                    for (Element article : articles) {
-                        // 查找并处理每个漫画文章的标题
-                        Element h1 = article.select("h1").first();
-                        String mangaPath = "";
-                        String mangaTitle;
-                        if (h1 != null) {
-                            mangaTitle = FilenameUtils.sanitizeFileName(h1.text());
-                            System.out.println("开始下载: " + mangaTitle);
-                            mangaPath = Paths.get(mainDirPath, mangaTitle).toString();
-                            FileUtils.createDirectory(mangaPath);
+
+                    // 获取页面标题并创建下载目录
+                    String title = doc.title().replace(" – Telegraph", "");
+                    String folderName = FilenameUtils.sanitizeFileName(title); // 确保文件名合法
+                    System.out.println("开始下载: " + folderName);
+                    String folderPath = Paths.get(mainDirPath, folderName).toString();
+                    FileUtils.createDirectory(folderPath);
+
+                    // 查找所有图片，无论嵌套多深
+                    Elements images = doc.select("img");
+                    int size = images.size();
+                    System.out.println("size = " + size);
+                    CountDownLatch latch = new CountDownLatch(size);
+
+                    // 下载每张图片
+                    for (Element img : images) {
+//                        String imageUrl = "https://telegra.ph/" + img.attr("src");  // 使用 absUrl 获取绝对路径
+//                        String imageUrl = img.attr("src");  // 使用 absUrl 获取绝对路径
+
+                        String imageUrl;
+                        if (img.attr("src").startsWith("http")) {
+                            imageUrl = img.attr("src");
                         } else {
-                            System.out.println("没有找到 <h1> tag");
-                            continue;
+                            imageUrl = "https://telegra.ph/" + img.attr("src");
                         }
-                        // 查找并处理每个漫画文章的图片
-                        Elements images = article.select("img");
-                        int size = images.size();
-                        CountDownLatch latch = new CountDownLatch(size);
-                        for (Element img : images) {
-                            String imageUrl = img.absUrl("src");
-                            if (imageUrl != null && !imageUrl.isEmpty()) {
-                                final int index = images.indexOf(img) + 1;
-                                String finalMangaPath = mangaPath;
-                                executor.submit(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        downloadImage(imageUrl, finalMangaPath, index, size);
-                                        latch.countDown(); // 每个任务完成后计数减一
-                                    }
-                                });
-                            } else {
-                                latch.countDown(); // 如果图片URL为空，也需要计数减一
-                            }
-                        }
-                        try {
-                            // 等待所有任务完成
-                            latch.await();
-                            System.out.println(mangaTitle + " 下载完成");
-                            FileUtils.zip(mangaPath);
-                            FileUtils.deleteFolder(mangaPath);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            System.err.println("下载过程中被中断");
+
+                        if (imageUrl != null && !imageUrl.isEmpty()) {
+                            final int index = images.indexOf(img) + 1;  // 确保序号一致
+                            executor.submit(() -> {
+                                downloadImage(imageUrl, folderPath, index, size);
+                                latch.countDown(); // 每个任务完成后减一
+                            });
+                        } else {
+                            latch.countDown();
                         }
                     }
+
+                    try {
+                        // 等待所有任务完成
+                        latch.await();
+                        System.out.println(folderName + " 下载完成");
+                        FileUtils.zip(folderPath);
+                        FileUtils.deleteFolder(folderPath);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        System.err.println("下载过程中被中断");
+                    }
                 } else {
-                    System.out.println("Request failed: " + response.code());
+                    System.out.println("请求失败: " + response.code());
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 
     /**
      * 关闭线程池执行器
