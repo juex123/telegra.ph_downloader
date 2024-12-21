@@ -61,7 +61,7 @@ public class ImageRenamer {
 
     // 示例使用
     public static void main(String[] args) {
-        String directoryPath = "E:\\test\\あなたが望むなら（若这是你所期望的）【1-6】  451 - 563";
+        String directoryPath = "E:\\test\\COMIC BAVEL 2024年11月号 [中国翻訳] [無修正] [DL版]  1 - 150  1 - 150  1 - 150  1 - 131";
         int n = 450; // 要增加的数字量
         ImageRenamer renamer = new ImageRenamer(directoryPath, n);
         renamer.renameImages();
